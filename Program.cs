@@ -1,4 +1,5 @@
 ﻿using System.Numerics;
+using System.Security.Cryptography;
 using System.Xml.Linq;
 
 namespace TextRPG2
@@ -9,7 +10,7 @@ namespace TextRPG2
         public string Job { get; }
         public int Level { get; }
         public int Gold { get; set; }
-        public int Hp { get; }
+        public int Hp { get; set; }
         public int Atk { get; }
         public int Def { get; }
         public Character(string name, string job, int level, int atk, int def, int hp, int gold)
@@ -170,9 +171,6 @@ namespace TextRPG2
         }
 
     }
-
-
-
     internal class Program
     {
         static Character _player;
@@ -194,8 +192,9 @@ namespace TextRPG2
             Console.WriteLine("\n1. 상태 보기");
             Console.WriteLine("2. 인벤토리");
             Console.WriteLine("3. 상점");
+            Console.WriteLine("4. 던전 입장");
 
-            switch(CheckValidInput(1, 3))
+            switch(CheckValidInput(1, 4))
             {
                 case 1:
                     // 상태 보기
@@ -209,7 +208,147 @@ namespace TextRPG2
                     //상점
                     Shop();
                     break;
+                case 4:
+                    DungeonEntry();
+                    break;
             }
+        }
+        private static Random random = new Random();
+        private static void DungeonEntry()
+        {
+            Console.Clear();
+            ShowHighLighterText("■던전 입장■");
+            Console.WriteLine("던전에 입장합니다. 난이도를 선택하세요.");
+            Console.WriteLine("\n1. 쉬움 (권장 방어력: 5)");
+            Console.WriteLine("2. 보통 (권장 방어력: 11)");
+            Console.WriteLine("3. 어려움 (권장 방어력: 17)");
+            Console.WriteLine("0. 나가기");
+
+            int dungeonChoice = CheckValidInput(0, 3);
+
+            if (dungeonChoice == 0)
+            {
+                StartMenu();
+            }
+            else
+            {
+                int recommendedDefense = GetRecommendedDefense(dungeonChoice);
+                int playerDefense = _player.Def + getSumBonusDef();
+
+                Console.WriteLine($"\n[던전 정보]");
+                Console.WriteLine($"- 권장 방어력: {recommendedDefense}");
+                Console.WriteLine($"- 내 방어력: {playerDefense}");
+
+                if (playerDefense < recommendedDefense)
+                {
+                    Console.WriteLine($"\n던전에 도전하기에는 내 방어력이 부족합니다.");
+                    Console.WriteLine($"던전 성공 확률: 60%");
+                    Console.WriteLine($"던전에 도전하시겠습니까? (Y/N)");
+
+                    if (Console.ReadKey().Key == ConsoleKey.Y)
+                    {
+                        if (GetRandomNumber(1, 101) <= 60)
+                        {
+                            FailDungeon(recommendedDefense);
+                        }
+                        else
+                        {
+                            Console.WriteLine("\n던전 도전에 성공했습니다!");
+                            ClearDungeon(dungeonChoice);
+                        }
+                    }
+                    else
+                    {
+                        DungeonEntry();
+                    }
+                } else
+                {
+                    Console.WriteLine($"\n던전 도전 확률: 100%");
+                    Console.WriteLine($"던전에 도전하시겠습니까? (Y/N)");
+
+                    if (Console.ReadKey().Key == ConsoleKey.Y)
+                    {
+                        Console.WriteLine("\n던전 도전에 성공했습니다!");
+                        ClearDungeon(dungeonChoice);
+                    }
+                    else
+                    {
+                        DungeonEntry();
+                    }
+                }
+            }
+        }
+        private static void FailDungeon(int recommendedDefense)
+        {
+            Console.WriteLine($"\n던전 도전에 실패했습니다. 보상 없음.");
+            _player.Hp = Math.Max(0, _player.Hp - GetRandomNumber(10, 31));
+
+            Console.WriteLine($"\n던전 도전 후 상태:");
+            Console.WriteLine($"- 현재 체력: {_player.Hp}");
+            Console.WriteLine($"계속하려면 아무 키나 누르세요...");
+            Console.ReadKey();
+
+            StartMenu();
+        }
+
+        private static void ClearDungeon(int dungeonChoice)
+        {
+            Console.WriteLine($"\n던전 클리어 축하합니다!!");
+            int basicReward = GetBasicDungeonReward(dungeonChoice);
+            int additionalReward = GetAdditionalReward(_player.Atk);
+
+            int totalReward = basicReward + additionalReward;
+            _player.Gold += totalReward;
+
+            Console.WriteLine($"\n[탐험 결과]");
+            Console.WriteLine($"- 체력 {100} -> {_player.Hp}");
+            Console.WriteLine($"- 보상 {basicReward} G -> {totalReward} G");
+
+            Console.WriteLine($"\n0. 나가기");
+            int choice = CheckValidInput(0, 0);
+            if (choice == 0)
+            {
+                StartMenu();
+            }
+        }
+
+        private static int GetRecommendedDefense(int dungeonChoice)
+        {
+            switch (dungeonChoice)
+            {
+                case 1: return 5;
+                case 2: return 11;
+                case 3: return 17;
+                default: return 0;
+            }
+        }
+        private static int GetRandomNumber(int min, int max)
+        {
+            return random.Next(min, max + 1);
+        }
+
+        private static int GetBasicDungeonReward(int dungeonChoice)
+        {
+            switch (dungeonChoice)
+            {
+                case 1:
+                    return GetRandomNumber(20, 35);
+                case 2:
+                    return GetRandomNumber(20, 35); 
+                case 3:
+                    return GetRandomNumber(20, 35); 
+                default:
+                    return 0;
+            }
+        }
+        private static int GetAdditionalReward(int attackPower)
+        {
+            // 추가 보상은 공격력의 백분율로 획득 가능 (공격력 * 1.0)
+            int percentage = GetRandomNumber(10, 20); // 10에서 20 사이의 랜덤 백분율을 얻습니다.
+
+            int additionalReward = (int)(attackPower * (percentage / 100.0));
+
+            return additionalReward;
         }
 
         private static void Shop()
@@ -504,7 +643,7 @@ namespace TextRPG2
         }
 
 
-        private static void ShowHighLighterText(string text)
+        public static void ShowHighLighterText(string text)
         {
             Console.ForegroundColor = ConsoleColor.Magenta;
             Console.WriteLine(text);
