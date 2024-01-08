@@ -127,6 +127,23 @@ namespace TextRPG2
 
         }
 
+        public void PrintSellShopitemStatDescription(bool withnumber = false, int idx = 0)
+        {
+            Console.Write("- ");
+            Console.ForegroundColor = ConsoleColor.Cyan;
+            Console.Write($"{idx}. ");
+            Console.ResetColor();
+            Console.Write(PadRightForMixedText(Name, 15));
+            Console.Write(" | ");
+            if (Atk != 0) Console.Write($"Atk {(Atk >= 0 ? "+" : "")}{Atk}");
+            if (Def != 0) Console.Write($"Def {(Def >= 0 ? "+" : "")}{Def}");
+            if (Hp != 0) Console.Write($"Hp {(Hp >= 0 ? "+" : "")}{Hp}");
+
+            Console.Write(" | ");
+            Console.Write(PadRightForMixedText(Description, 50));
+            Console.Write(" | ");
+            Console.WriteLine(PadRightForMixedText($"{Gold*0.85} G", 9));
+        }
 
         public static int GetPrintableLength(string str)
         {
@@ -208,9 +225,14 @@ namespace TextRPG2
                 _shopItems[i].PrintShopitemStatDescription(true, i + 1);
             }
             Console.WriteLine("\n1. 아이템 구매");
+            Console.WriteLine("2. 아이템 판매");
             Console.WriteLine("0. 나가기");
-            switch (CheckValidInput(0, 1))
+            switch (CheckValidInput(0, 2))
             {
+                case 2:
+                    //아이템 판매
+                    SellShop();
+                    break;
                 case 1:
                     //아이템 구매
                     BuyShop();
@@ -220,6 +242,61 @@ namespace TextRPG2
                     StartMenu();
                     break;
             }
+        }
+
+        private static void SellShop()
+        {
+            Console.Clear();
+            ShowHighLighterText("■상점 - 아이템 판매■");
+            Console.WriteLine("판매할 아이템을 선택하세요.");
+            Console.WriteLine("\n[보유 골드]");
+            Console.WriteLine("{0} G", _player.Gold);
+            Console.WriteLine("\n[아이템 목록]");
+
+            for (int i = 0; i < Item.ItemCnt; i++)
+            {
+                _items[i].PrintSellShopitemStatDescription(true, i + 1);
+            }
+
+            Console.WriteLine("\n0. 나가기");
+
+            int selectedItemIndex = CheckValidInput(0, Item.ItemCnt);
+
+            if (selectedItemIndex == 0)
+            {
+                // 나가기 옵션 선택
+                Shop();
+            }
+            else if (selectedItemIndex >= 1 && selectedItemIndex <= Item.ItemCnt)
+            {
+                int itemIndex = selectedItemIndex - 1;
+           
+                _items[itemIndex].IsEquipped = false;
+                _player.Gold += (int)(_items[itemIndex].Gold * 0.85);
+                Console.WriteLine($"아이템 '{_items[itemIndex].Name}'을(를) 판매했습니다.");
+                Console.WriteLine($"판매 가격으로 {_items[itemIndex].Gold * 0.85}G를 획득했습니다.");
+
+                RemoveItem(itemIndex);
+            }
+            else
+            {
+                Console.WriteLine("잘못된 입력입니다.");
+            }
+
+            Console.WriteLine("계속하려면 아무 키나 누르세요...");
+            Console.ReadKey();
+
+            // 다시 상점으로 이동
+            Shop();
+        }
+        static void RemoveItem(int index)
+        {
+            for (int i = index; i < Item.ItemCnt - 1; i++)
+            {
+                _items[i] = _items[i + 1];
+            }
+            _items[Item.ItemCnt - 1] = null;
+            Item.ItemCnt--;
         }
 
         private static void BuyShop()
@@ -475,9 +552,7 @@ namespace TextRPG2
             _player = new Character("chad", "전사", 1, 10, 5, 100, 1500);
             _items = new Item[10];
             _shopItems = new Item[10];
-            AddItem(new Item("무쇠갑옷", "무쇠로 만들어져 튼튼한 갑옷입니다.", 0, 0, 9, 0, 300));
-            AddItem(new Item("낡은 검", "쉽게 볼 수 있는 낡은 검입니다.", 1, 2, 0, 0, 600));
-            AddItem(new Item("스파르타의 창", "스파르타의 전사들이 사용했다는 전설의 창입니다..", 2, 7, 0, 0, 4000));
+            
             AddShopItem(new Item("무쇠갑옷", "무쇠로 만들어져 튼튼한 갑옷입니다.", 0, 0, 9, 0, 300));
             AddShopItem(new Item("낡은 검", "쉽게 볼 수 있는 낡은 검입니다.", 1, 2, 0, 0, 600));
             AddShopItem(new Item("수련자 갑옷", "수련에 도움을 주는 갑옷입니다.", 2, 0, 5, 0, 1000));
