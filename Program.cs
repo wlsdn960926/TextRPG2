@@ -270,13 +270,15 @@ namespace TextRPG2
             else if (selectedItemIndex >= 1 && selectedItemIndex <= Item.ItemCnt)
             {
                 int itemIndex = selectedItemIndex - 1;
-           
+
+                             
                 _items[itemIndex].IsEquipped = false;
                 _player.Gold += (int)(_items[itemIndex].Gold * 0.85);
                 Console.WriteLine($"아이템 '{_items[itemIndex].Name}'을(를) 판매했습니다.");
                 Console.WriteLine($"판매 가격으로 {_items[itemIndex].Gold * 0.85}G를 획득했습니다.");
 
                 RemoveItem(itemIndex);
+                
             }
             else
             {
@@ -418,10 +420,33 @@ namespace TextRPG2
         static Dictionary<int, bool> isTypeEquipped = new Dictionary<int, bool>();
         private static void ToggleEquipStatus(int idx)
         {
-            if(!isTypeEquipped.ContainsKey(idx)) isTypeEquipped[idx] = false;
-            if (isTypeEquipped[idx] == true && !_items[idx].IsEquipped) return;
-            _items[idx].IsEquipped = !_items[idx].IsEquipped;
+            if (!isTypeEquipped.ContainsKey(_items[idx].Type))
+                isTypeEquipped[_items[idx].Type] = false;
+
+            if (_items[idx].IsEquipped)
+            {
+                _items[idx].IsEquipped = false;
+                isTypeEquipped[_items[idx].Type] = false;
+                Console.WriteLine($"'{_items[idx].Name}'을(를) 해제했습니다.");
+                Console.ReadKey();
+            }
+            else
+            {
+                if (isTypeEquipped[_items[idx].Type])
+                {
+                    Console.WriteLine($"{(_items[idx].Type == 0 ? "갑옷" : "무기")}이(가) 이미 장착되어 있습니다. 해제 후 다시 시도하세요.");
+                    Console.ReadKey();
+                }
+                else
+                {
+                    _items[idx].IsEquipped = true;
+                    isTypeEquipped[_items[idx].Type] = true;
+                    Console.WriteLine($"'{_items[idx].Name}'을(를) 장착했습니다.");
+                    Console.ReadKey();
+                }
+            }
         }
+
 
         private static void StatusMenu()
         {
@@ -555,10 +580,10 @@ namespace TextRPG2
             
             AddShopItem(new Item("무쇠갑옷", "무쇠로 만들어져 튼튼한 갑옷입니다.", 0, 0, 9, 0, 300));
             AddShopItem(new Item("낡은 검", "쉽게 볼 수 있는 낡은 검입니다.", 1, 2, 0, 0, 600));
-            AddShopItem(new Item("수련자 갑옷", "수련에 도움을 주는 갑옷입니다.", 2, 0, 5, 0, 1000));
-            AddShopItem(new Item("스파르타의 갑옷", "스파르타의 전사들이 사용했다는 전설의 갑옷입니다.", 3, 0, 15, 0, 3500));
-            AddShopItem(new Item("청동 도끼", "어디선가 사용됐던거 같은 도끼입니다.", 4, 5, 0, 0, 1500));
-            AddShopItem(new Item("스파르타의 창", "스파르타의 전사들이 사용했다는 전설의 창입니다.", 5, 7, 0, 0, 4000));
+            AddShopItem(new Item("수련자 갑옷", "수련에 도움을 주는 갑옷입니다.", 0, 0, 5, 0, 1000));
+            AddShopItem(new Item("스파르타의 갑옷", "스파르타의 전사들이 사용했다는 전설의 갑옷입니다.", 0, 0, 15, 0, 3500));
+            AddShopItem(new Item("청동 도끼", "어디선가 사용됐던거 같은 도끼입니다.", 1, 5, 0, 0, 1500));
+            AddShopItem(new Item("스파르타의 창", "스파르타의 전사들이 사용했다는 전설의 창입니다.", 1, 7, 0, 0, 4000));
 
         }
         static void AddItem(Item item)
